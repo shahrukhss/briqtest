@@ -5,6 +5,8 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.apache.commons.io.FileUtils;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -19,15 +21,16 @@ public class StepDefinition {
 
 	private WebDriver driver;
 
-
 	@Given("^user wants crane details for \"([^\"]*)\"$")
 	public void user_wants_crane_details_for(String cityName) {
+		System.out.println("This is setup method");
 		System.setProperty("webdriver.chrome.driver", "driver/chromedriver");
 		ChromeOptions options =  new ChromeOptions();
 		options.addArguments("disable-infobars");
 		options.setCapability(CapabilityType.SUPPORTS_ALERTS, false);
 		options.setCapability("autoGrantPermissions", true);
 		driver = new ChromeDriver();
+
 		String urlString = String.format("https://www.bizjournals.com/%s/feature/crane-watch", cityName);
 		driver.get(urlString);
 		driver.manage().window().maximize();
@@ -35,17 +38,30 @@ public class StepDefinition {
 	@Given("^user clicks on view on the map button$")
 	public void user_clicks_on_view_on_the_map_button() throws Throwable {
 		driver.findElement(By.xpath("//a[@data-ct=\"OPT: View Map Asset\"][1]")).click();
-		Thread.sleep(10000);
-		System.out.println(driver.findElement(By.xpath("//*[@id='map']/div/div/div/*[local-name() = 'svg']/*/*[local-name() = 'image'][1]")).isDisplayed());
+		Thread.sleep(1000);
 
-//		List<WebElement> cranesList = driver.findElements(By.xpath("//*[@id='map']/div/div/div/*[local-name() = 'svg']/*/*[local-name() = 'image']"));
-//		System.out.println(cranesList.size());
-//		int count = 1;
-//		for (WebElement crane : cranesList
-//			 ) {
-//			count++;
-//		}
-//		System.out.println(String.format("found %s cranes in this city", count));
+		WebElement mapEle = driver.findElement(By.xpath("//*[@id=\"boundary0\"]/article/div[1]/div/div/iframe"));
+		driver.navigate().to(mapEle.getAttribute("src"));
+		Thread.sleep(5000);
+
+
+
+
+//		System.out.println("element exists : "+ driver.findElement(By.xpath("//*[@id='map']/div/div/div/*[local-name() = 'svg']/*/*[local-name() = 'image'][1]")).isDisplayed());
+//		Thread.sleep(5000);
+//
+		List<WebElement> cranesList = driver.findElements(By.xpath("//*[@id='map']/div/div/div/*[local-name() = 'svg']/*/*[local-name() = 'image']"));
+		System.out.println("these many number of cranes in area: "+ cranesList.size());
+		int count = 0;
+		for (WebElement crane : cranesList
+			 ) {
+//			System.out.println(crane.getAttribute());
+			crane.click();
+			Thread.sleep(500);
+
+			count++;
+		}
+
 	}
 
 	@Then("^close the browser$")
