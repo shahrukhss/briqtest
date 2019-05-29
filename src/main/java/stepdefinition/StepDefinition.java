@@ -5,30 +5,33 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.CapabilityType;
+import props.CraneDetails;
+import props.ExportData;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 public class StepDefinition {
 
 	private WebDriver driver;
+	static String cityName;
 
 	@Given("^user wants crane details for \"([^\"]*)\"$")
 	public void user_wants_crane_details_for(String cityName) {
+		this.cityName = cityName;
 		System.out.println("This is setup method");
 		System.setProperty("webdriver.chrome.driver", "driver/chromedriver");
 		ChromeOptions options =  new ChromeOptions();
-		options.addArguments("disable-infobars");
-		options.setCapability(CapabilityType.SUPPORTS_ALERTS, false);
-		options.setCapability("autoGrantPermissions", true);
+		//options.addArguments("disable-infobars");
+//		options.setCapability(CapabilityType.SUPPORTS_ALERTS, false);
+		//options.setCapability("autoGrantPermissions", true);
 		driver = new ChromeDriver();
 
 		String urlString = String.format("https://www.bizjournals.com/%s/feature/crane-watch", cityName);
@@ -42,24 +45,44 @@ public class StepDefinition {
 
 		WebElement mapEle = driver.findElement(By.xpath("//*[@id=\"boundary0\"]/article/div[1]/div/div/iframe"));
 		driver.navigate().to(mapEle.getAttribute("src"));
-		Thread.sleep(5000);
+		Thread.sleep(10000);
 
 
 
 
 //		System.out.println("element exists : "+ driver.findElement(By.xpath("//*[@id='map']/div/div/div/*[local-name() = 'svg']/*/*[local-name() = 'image'][1]")).isDisplayed());
 //		Thread.sleep(5000);
-//
 		List<WebElement> cranesList = driver.findElements(By.xpath("//*[@id='map']/div/div/div/*[local-name() = 'svg']/*/*[local-name() = 'image']"));
 		System.out.println("these many number of cranes in area: "+ cranesList.size());
 		int count = 0;
+		Map<String, String> craneDetails = new HashMap<String, String>();
+		List<CraneDetails> details = new ArrayList<CraneDetails>();
+		CraneDetails individual_Crane = new CraneDetails();
+
+		List<WebElement> attributes;
+		List<WebElement> values;
+
+		Actions a = new Actions(driver);
 		for (WebElement crane : cranesList
 			 ) {
-//			System.out.println(crane.getAttribute());
-			crane.click();
+			Thread.sleep(500);
+			a.moveToElement(crane).click().build().perform();
 			Thread.sleep(500);
 
-			count++;
+			attributes = driver.findElements(By.xpath("//table[@class='attrTable']/tbody/tr/td[1]"));
+			values = driver.findElements(By.xpath("//table[@class='attrTable']/tbody/tr/td[2]"));
+
+
+			if(attributes.size() == values.size()){
+				for(int i = 0; i < attributes.size(); i++){
+					craneDetails.put(attributes.get(i).getText(), values.get(i).getText());
+				}
+				//write to exel
+//				ExportData.writeToExcel(craneDetails);
+			}
+			else{
+				throw new Exception("There is some desrepancy in crane details");
+			}
 		}
 
 	}
